@@ -5,6 +5,11 @@
 
 :-use_module(library(lists)).
 
+put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, RowSat, ColSat):-
+    putAux(Contenido, [RowN, ColN], Grilla, NewGrilla),
+    isRowCorrect(RowN,PistasFilas,NewGrilla,RowSat),
+    isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -23,10 +28,6 @@ replace(X, XIndex, Y, [Xi|Xs], [Xi|XsY]):-
 %
 % put(+Contenido, +Pos, +PistasFilas, +PistasColumnas, +Grilla, -GrillaRes, -FilaSat, -ColSat).
 %
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, RowSat, ColSat):-
-    putAux(Contenido, [RowN, ColN], Grilla, NewGrilla),
-    isRowCorrect(RowN,PistasFilas,NewGrilla,RowSat),
-    isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
 
 
 putAux(Contenido, [RowN, ColN], Grilla, NewGrilla):-
@@ -68,25 +69,29 @@ countSequence(Pista,["#"|RFila],NewFila):-
     PistaS is Pista - 1,
     countSequence(PistaS,RFila,NewFila).
 
-countSquares([],[],1).
-countSquares([],[C|_],0):-
-    C == "#".
-countSquares([],[C|RCeldas],Sat):-
+
+countSquares([0|_],Celdas,Sat):-
+    countSquares([],Celdas,Sat).
+countSquares([],[]).
+countSquares([],[C|RCeldas]):-
     C =\= "#",
-    countSquares([],RCeldas,Sat).
-countSquares(Pistas,["X"|RCeldas],Sat):-
-    countSquares(Pistas,RCeldas,Sat).
-countSquares(Pistas,["_"|RCeldas],Sat):-
-    countSquares(Pistas,RCeldas,Sat).
-countSquares([Pista|RPistas],["#"|RCeldas],Sat):-
+    countSquares([],RCeldas).
+countSquares(Pistas,[C|RCeldas]):-
+    C =\= "#",
+    countSquares(Pistas,RCeldas).
+countSquares([Pista|RPistas],["#"|RCeldas]):-
     countSequence(Pista,["#"|RCeldas],NewFila),
-    countSquares(RPistas,NewFila,Sat).
+    countSquares(RPistas,NewFila).
 
 isRowCorrect(RowN,PistasFilas,Grilla,RowSat):-
     %obtengo la fila de la grilla y las pistas para esa fila
     getPos(RowN,PistasFilas,PistasN),
     getPos(RowN,Grilla,Fila),
-    countSquares(PistasN,Fila,RowSat).
+    (countSquares(PistasN,Fila),
+    RowSat is 1
+        ;
+    RowSat is 0
+    ).
 
 getColAux(_,[],Col,Col).
 getColAux(ColN,[Fila|RFilas],ColAux,Columna):-
@@ -100,7 +105,11 @@ getCol(ColN,Grilla,Columna):-
 isColumnCorrect(ColN,PistasCol,Grilla,ColSat):-
     getPos(ColN,PistasCol,PistasN),
     getCol(ColN,Grilla,Columna),
-    countSquares(PistasN,Columna,ColSat).
+    (countSquares(PistasN,Columna),
+    ColSat is 1
+        ;
+    ColSat is 0
+    ).
 
 
 
