@@ -23,23 +23,13 @@ replace(X, XIndex, Y, [Xi|Xs], [Xi|XsY]):-
 %
 % put(+Contenido, +Pos, +PistasFilas, +PistasColumnas, +Grilla, -GrillaRes, -FilaSat, -ColSat).
 %
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, 1, 1):-
-    putAux(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla),
-    isRowCorrect(RowN,PistasFilas,NewGrilla),
-    isColumnCorrect(ColN,PistasColumnas,NewGrilla).
+put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, RowSat, ColSat):-
+    putAux(Contenido, [RowN, ColN], Grilla, NewGrilla),
+    isRowCorrect(RowN,PistasFilas,NewGrilla,RowSat),
+    isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
 
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, 1, 0):-
-    putAux(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla),
-    isRowCorrect(RowN,PistasFilas,NewGrilla).
 
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, 0, 1):-
-    putAux(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla),
-    isColumnCorrect(ColN,PistasColumnas,NewGrilla).
-
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, 0, 0):-
-    putAux(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla).
-
-putAux(Contenido, [RowN, ColN], _PistasFilas, _PistasColumnas, Grilla, NewGrilla):-
+putAux(Contenido, [RowN, ColN], Grilla, NewGrilla):-
 	% NewGrilla es el resultado de reemplazar la fila Row en la posición RowN de Grilla
 	% (RowN-ésima fila de Grilla), por una fila nueva NewRow.
 
@@ -48,12 +38,14 @@ putAux(Contenido, [RowN, ColN], _PistasFilas, _PistasColumnas, Grilla, NewGrilla
 	% NewRow es el resultado de reemplazar la celda Cell en la posición ColN de Row por _,
 	% siempre y cuando Cell coincida con Contenido (Cell se instancia en la llamada al replace/5).
 	% En caso contrario (;)
-	% NewRow es el resultado de reemplazar lo que se que haya (_Cell) en la posición ColN de Row por Conenido.
+	% NewRow es el resultado de reemplazar lo que se que haya (_Cell) en la posición ColN de Row por Contenido.
 
-	(replace(Cell, ColN, _, Row, NewRow),
+    (replace(Cell, ColN, "_", Row, NewRow),
 	Cell == Contenido
 		;
-	replace(_Cell, ColN, Contenido, Row, NewRow)).
+	replace(Cell, ColN, Contenido, Row, NewRow),
+    Cell=\=Contenido
+    ).
 
 
 getPos(0,[X|_],X).
@@ -76,24 +68,25 @@ countSequence(Pista,["#"|RFila],NewFila):-
     PistaS is Pista - 1,
     countSequence(PistaS,RFila,NewFila).
 
-countSquares([],[]).
-countSquares([],["X",RCeldas]):-
-    countSquares([],RCeldas).
-countSquares([],["_",RCeldas]):-
-    countSquares([],RCeldas).
-countSquares(Pistas,["X"|RCeldas]):-
-    countSquares(Pistas,RCeldas).
-countSquares(Pistas,["_"|RCeldas]):-
-    countSquares(Pistas,RCeldas).
-countSquares([Pista|RPistas],["#"|RCeldas]):-
+countSquares([],[],1).
+countSquares([],[C|_],0):-
+    C == "#".
+countSquares([],[C|RCeldas],Sat):-
+    C =\= "#",
+    countSquares([],RCeldas,Sat).
+countSquares(Pistas,["X"|RCeldas],Sat):-
+    countSquares(Pistas,RCeldas,Sat).
+countSquares(Pistas,["_"|RCeldas],Sat):-
+    countSquares(Pistas,RCeldas,Sat).
+countSquares([Pista|RPistas],["#"|RCeldas],Sat):-
     countSequence(Pista,["#"|RCeldas],NewFila),
-    countSquares(RPistas,NewFila).
+    countSquares(RPistas,NewFila,Sat).
 
-isRowCorrect(RowN,PistasFilas,Grilla):-
+isRowCorrect(RowN,PistasFilas,Grilla,RowSat):-
     %obtengo la fila de la grilla y las pistas para esa fila
     getPos(RowN,PistasFilas,PistasN),
     getPos(RowN,Grilla,Fila),
-    countSquares(PistasN,Fila).
+    countSquares(PistasN,Fila,RowSat).
 
 getColAux(_,[],Col,Col).
 getColAux(ColN,[Fila|RFilas],ColAux,Columna):-
@@ -104,10 +97,10 @@ getCol(ColN,Grilla,Columna):-
     getColAux(ColN,Grilla,[],ColInvertida),
     invertirLista(ColInvertida,Columna).
 
-isColumnCorrect(ColN,PistasCol,Grilla):-
+isColumnCorrect(ColN,PistasCol,Grilla,ColSat):-
     getPos(ColN,PistasCol,PistasN),
     getCol(ColN,Grilla,Columna),
-    countSquares(PistasN,Columna).
+    countSquares(PistasN,Columna,ColSat).
 
 
 
