@@ -2,6 +2,7 @@ import React from 'react';
 import PengineClient from './PengineClient';
 import Board from './Board';
 
+
 class Game extends React.Component {
 
   pengine;
@@ -20,6 +21,7 @@ class Game extends React.Component {
     };
     this.handleClick = this.handleClick.bind(this);
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
+    this.changePut = this.changePut.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
   }
 
@@ -38,6 +40,8 @@ class Game extends React.Component {
     });
   }
 
+  
+
   handleClick(i, j) {
     // No action on click if we are waiting.
     if (this.state.waiting||this.state.win) {
@@ -48,7 +52,8 @@ class Game extends React.Component {
     const squaresS = JSON.stringify(this.state.grid)//.replaceAll('"_"', "_"); // Remove quotes for variables.
     const rowClues = JSON.stringify(this.state.rowClues);
     const colClues = JSON.stringify(this.state.colClues);
-    const queryS = 'put("#", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
+    const currentPut = this.state.currentPut;
+    const queryS = 'put("'+ currentPut +'", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
     this.setState({
       waiting: true
     });
@@ -94,6 +99,19 @@ class Game extends React.Component {
     });
   }
 
+  changePut(){
+    let aux = this.state.currentPut;
+    if (aux === "#"){
+      aux = "X";
+    }
+    else{
+      aux = "#";
+    }
+    this.setState({
+      currentPut:aux
+    });
+  }
+
   render() {
     if (this.state.grid === null) {
       return null;
@@ -111,8 +129,11 @@ class Game extends React.Component {
         <div className="gameInfo">
           {statusText}
         </div>
+        <div>
+          <button onClick={this.changePut}>{this.state.currentPut}</button>
+        </div>
+        
       </div>
-
     );
   }
 }
