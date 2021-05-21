@@ -14,6 +14,8 @@ class Game extends React.Component {
       grid: null,
       rowClues: null,
       colClues: null,
+      win: false,
+      statusText:'Keep playing!',
       waiting: false
     };
     this.handleClick = this.handleClick.bind(this);
@@ -38,7 +40,7 @@ class Game extends React.Component {
 
   handleClick(i, j) {
     // No action on click if we are waiting.
-    if (this.state.waiting) {
+    if (this.state.waiting||this.state.win) {
       return;
     }
     // Build Prolog query to make the move, which will look as follows:
@@ -60,6 +62,30 @@ class Game extends React.Component {
           solvedRowCol: aux,
           waiting: false
         });
+        let win = true;
+        let rows = this.state.solvedRowCol[0];
+        let columns = this.state.solvedRowCol[1];
+        for (let x in rows) {
+          if(rows[x]===0){
+            win = false;
+            break;
+          }
+        };
+        if(win){
+          for (let x in columns){
+            if(columns[x]===0){
+              win=false;
+              break;
+            }
+          }
+        }
+        if(win){
+          this.setState({
+            win:true,
+            statusText:'You Win!!!'
+          });
+        }
+         
       } else {
         this.setState({
           waiting: false
@@ -72,7 +98,7 @@ class Game extends React.Component {
     if (this.state.grid === null) {
       return null;
     }
-    const statusText = 'Keep playing!';
+    const statusText = this.state.statusText;
     return (
       <div className="game">
         <Board
