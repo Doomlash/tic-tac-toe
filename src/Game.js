@@ -85,9 +85,18 @@ class Game extends React.Component {
           }
         }
         if(win){
+          let grilla = this.state.grid
+          for (let x in rows){
+            for (let y in columns){
+              if(grilla[x][y]=== "_"){
+                grilla[x][y]="X"
+              }
+            }
+          }
           this.setState({
             win:true,
-            statusText:'You Win!!!'
+            statusText:'You Win!!!',
+            grid:grilla
           });
         }
          
