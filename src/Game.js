@@ -13,25 +13,34 @@ class Game extends React.Component {
       currentPut: "#",
       solvedRowCol: null,
       grid: null,
+      currentGrid: null,
+      solvedGrid: null,
+      solvedGridShow: false,
+      solveNext: false,
       rowClues: null,
       colClues: null,
       win: false,
       statusText:'Keep playing!',
+      solvedGridButton: 'Show Solved Grid',
       waiting: false
     };
     this.handleClick = this.handleClick.bind(this);
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
     this.changePut = this.changePut.bind(this);
+    this.showSolution = this.showSolution.bind(this);
+    this.solveCell = this.solveCell.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
   }
 
   handlePengineCreate() {
+
     const queryS = 'init(PistasFilas, PistasColumns, Grilla)';
     this.pengine.query(queryS, (success, response) => {
       if (success) {
         const aux = [Array(response['Grilla'].length).fill(0),Array(response['Grilla'][0].length).fill(0)];
         this.setState({
           grid: response['Grilla'],
+          solvedGrid: response['Grilla'],
           solvedRowCol:aux,
           rowClues: response['PistasFilas'],
           colClues: response['PistasColumns'],
@@ -44,7 +53,7 @@ class Game extends React.Component {
 
   handleClick(i, j) {
     // No action on click if we are waiting.
-    if (this.state.waiting||this.state.win) {
+    if (this.state.waiting||this.state.win||this.state.solvedGridShow) {
       return;
     }
     // Build Prolog query to make the move, which will look as follows:
@@ -52,7 +61,11 @@ class Game extends React.Component {
     const squaresS = JSON.stringify(this.state.grid).replaceAll('"_"', "_"); // Remove quotes for variables.
     const rowClues = JSON.stringify(this.state.rowClues);
     const colClues = JSON.stringify(this.state.colClues);
-    const currentPut = this.state.currentPut;
+    let auxPut = this.state.currentPut;
+    if(this.state.solveNext){
+      auxPut = this.state.solvedGrid[i][j]
+    }
+    const currentPut = auxPut;
     const queryS = 'put("'+ currentPut +'", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
     this.setState({
       waiting: true
@@ -65,7 +78,8 @@ class Game extends React.Component {
         this.setState({
           grid: response['GrillaRes'],
           solvedRowCol: aux,
-          waiting: false
+          waiting: false,
+          solveNext: false
         });
         let win = true;
         let rows = this.state.solvedRowCol[0];
@@ -121,6 +135,30 @@ class Game extends React.Component {
     });
   }
 
+  showSolution(){
+      if(this.state.solvedGridShow){
+        this.setState({
+          grid:this.state.currentGrid,
+          solvedGridShow: false,
+          solvedGridButton:'Show Solved Grid'
+        })
+      }
+      else{
+        let auxGrid = this.state.grid;
+        this.setState({
+        grid:this.state.solvedGrid,
+        currentGrid:auxGrid,
+        solvedGridShow: true,
+        solvedGridButton:'Hide Solved Grid'
+      })}
+  }
+
+  solveCell(){
+      this.setState({
+        solveNext:true
+      })
+  }
+
   render() {
     if (this.state.grid === null) {
       return null;
@@ -128,6 +166,7 @@ class Game extends React.Component {
     const statusText = this.state.statusText;
     return (
       <div className="game">
+        <div>
         <Board
           grid={this.state.grid}
           rowClues={this.state.rowClues}
@@ -140,6 +179,11 @@ class Game extends React.Component {
         </div>
         <div>
           <button onClick={this.changePut}>{this.state.currentPut}</button>
+        </div>
+        </div>
+        <div>
+          <button onClick={this.showSolution}>{this.state.solvedGridButton}</button>
+          <button onClick={this.solveCell} disabled={this.state.solveNext}>Solve Cell</button>
         </div>
         
       </div>
