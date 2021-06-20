@@ -4,15 +4,18 @@
 	]).
 
 :-use_module(library(lists)).
-:-use_module(library(dif)).
 
+put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, RowSat, ColSat):-
+    putAux(Contenido, [RowN, ColN], Grilla, NewGrilla),
+    isRowCorrect(RowN,PistasFilas,NewGrilla,RowSat),
+    isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % replace(?X, +XIndex, +Y, +Xs, -XsY)
 %
-% XsY es el resultado de reemplazar la ocurrencia de X en la posici髇 XIndex de Xs por Y.
+% XsY es el resultado de reemplazar la ocurrencia de X en la posici贸n XIndex de Xs por Y.
 
 replace(X, 0, Y, [X|Xs], [Y|Xs]).
 
@@ -26,35 +29,32 @@ replace(X, XIndex, Y, [Xi|Xs], [Xi|XsY]):-
 % put(+Contenido, +Pos, +PistasFilas, +PistasColumnas, +Grilla, -GrillaRes, -FilaSat, -ColSat).
 %
 
-put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, RowSat, ColSat):-
-	% NewGrilla es el resultado de reemplazar la fila Row en la posici髇 RowN de Grilla
-	% (RowN-閟ima fila de Grilla), por una fila nueva NewRow.
+
+putAux(Contenido, [RowN, ColN], Grilla, NewGrilla):-
+	% NewGrilla es el resultado de reemplazar la fila Row en la posici贸n RowN de Grilla
+	% (RowN-茅sima fila de Grilla), por una fila nueva NewRow.
 
 	replace(Row, RowN, NewRow, Grilla, NewGrilla),
 
-	% NewRow es el resultado de reemplazar la celda Cell en la posici髇 ColN de Row por _,
+	% NewRow es el resultado de reemplazar la celda Cell en la posici贸n ColN de Row por _,
 	% siempre y cuando Cell coincida con Contenido (Cell se instancia en la llamada al replace/5).
 	% En caso contrario (;)
-	% NewRow es el resultado de reemplazar lo que se que haya (_Cell) en la posici髇 ColN de Row por Conenido.
+	% NewRow es el resultado de reemplazar lo que se que haya (_Cell) en la posici贸n ColN de Row por Contenido.
 
-	(replace(Cell, ColN, _, Row, NewRow),
+    (replace(Cell, ColN, "_", Row, NewRow),
 	Cell == Contenido
 		;
-	replace(_Cell, ColN, Contenido, Row, NewRow)),
+	replace(Cell, ColN, Contenido, Row, NewRow),
+    Cell=\=Contenido
+    ).
 
-        isRowCorrect(RowN,PistasFilas,NewGrilla,RowSat),
-        isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%getPos(?Pos,+List,?Element)
 
 getPos(0,[X|_],X).
 getPos(N,[_|XL],X):-
     N > 0,
     NS is N - 1,
     getPos(NS,XL,X).
+
 
 invertirAux([],L,L).
 invertirAux([X|RL],LAux,LI):-
@@ -63,32 +63,24 @@ invertirAux([X|RL],LAux,LI):-
 invertirLista(Lista,ListaInvertida):-
     invertirAux(Lista,[],ListaInvertida).
 
-
-
-
-countSequence(0,[X|XL],[X|XL]):-
-    dif(X,"#").
-
-countSequence(0,[],[]).
-
-countSequence(Pista,[X|RFila],NewFila):-
-    X == "#",
+countSequence(0,NewFila,NewFila).
+countSequence(Pista,["#"|RFila],NewFila):-
     Pista > 0,
     PistaS is Pista - 1,
     countSequence(PistaS,RFila,NewFila).
 
 
-
+countSquares([0|_],Celdas,Sat):-
+    countSquares([],Celdas,Sat).
 countSquares([],[]).
 countSquares([],[C|RCeldas]):-
-    dif(C,"#"),
+    C =\= "#",
     countSquares([],RCeldas).
 countSquares(Pistas,[C|RCeldas]):-
-    dif(C,"#"),
+    C =\= "#",
     countSquares(Pistas,RCeldas).
-countSquares([Pista|RPistas],[X|RCeldas]):-
-    X == "#",
-    countSequence(Pista,[X|RCeldas],NewFila),
+countSquares([Pista|RPistas],["#"|RCeldas]):-
+    countSequence(Pista,["#"|RCeldas],NewFila),
     countSquares(RPistas,NewFila).
 
 isRowCorrect(RowN,PistasFilas,Grilla,RowSat):-
@@ -118,6 +110,15 @@ isColumnCorrect(ColN,PistasCol,Grilla,ColSat):-
         ;
     ColSat is 0
     ).
+
+
+
+
+
+
+
+
+
 
 
 
