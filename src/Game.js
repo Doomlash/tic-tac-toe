@@ -210,7 +210,6 @@ class Game extends React.Component {
           <button onClick={this.showSolution}>{this.state.solvedGridButton}</button>
           <button onClick={this.solveCell} disabled={this.state.solveNext}>Solve Cell</button>
         </div>
-        
       </div>
     );
   }

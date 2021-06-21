@@ -6,6 +6,7 @@
 
 
 :-use_module(library(lists)).
+:-use_module(library(dif)).
 
 
 
@@ -121,19 +122,12 @@ generarFila(CantCol,[_|F]):-
     CantCol1 is CantCol - 1,
     generarFila(CantCol1,F).
 
-generarGrilla(0,_CantCol,[]).
+generarGrilla(0,_,[]).
 generarGrilla(CantFil,CantCol,[Fila|G]):-
     CantFil > 0,
     CantFil1 is CantFil - 1,
     generarGrilla(CantFil1,CantCol,G),
     generarFila(CantCol,Fila).
-
-lineaCompleta([]).
-lineaCompleta([A|F]):- 
-    (A=="#"
-       ;
-     A=="X"),
-    lineaCompleta(F).
 
 cantidadColumnas([A|_],Cant):-
     length(A,Cant).
@@ -159,32 +153,19 @@ jugadaCauta([A|L],J):-
     jugadaCauta(L,Aux),
     listaintersectada(Aux,A,J).
 
-generarPosibleJugada(Longitud,Jugada,[A|P]):-
-    generarPosibleJugadaAux(Longitud,Jugada,[A|P],A).
-generarPosibleJugadaAux(0,[],[_P],0).
-generarPosibleJugadaAux(Longitud,["X"|J],[_|[B|P]],0):-
-    Longitud>0,
-    Longitud1 is Longitud-1,
-    generarPosibleJugadaAux(Longitud1,J,[B|P],B).
-generarPosibleJugadaAux(Longitud,["#"|J],Pistas,PistaActual):-
+generarPosibleJugada(0,[]).
+generarPosibleJugada(Longitud,["#"|J]):-
     Longitud>0,
     Longitud1 is Longitud - 1,
-    PistaActual>0,
-    Pista1 is PistaActual-1,
-    generarPosibleJugadaAux(Longitud1,J,Pistas,Pista1).
-generarPosibleJugadaAux(Longitud,["X"|J],[B|P],B):-
+    generarPosibleJugada(Longitud1,J).
+generarPosibleJugada(Longitud,["X"|J]):-
     Longitud>0,
     Longitud1 is Longitud - 1,
-    generarPosibleJugadaAux(Longitud1,J,[B|P],B).
-generarPosibleJugadaAux(Longitud,["X"|J],[B|P],0):-
-    Longitud>0,
-    Longitud1 is Longitud - 1,
-    generarPosibleJugadaAux(Longitud1,J,[B|P],0).
-
+    generarPosibleJugada(Longitud1,J).
 
 generarJugada(Pistas,Linea,Jugada):-
     length(Linea,L),
-    findall(X,(generarPosibleJugada(L,X,Pistas),jugadaContenida(X,Linea)),ListaJugadas),
+    findall(X,(generarPosibleJugada(L,X),countSquares(Pistas,X),jugadaContenida(X,Linea)),ListaJugadas),
     not(ListaJugadas==[]),
     jugadaCauta(ListaJugadas,Jugada).
 generarJugada(_,Linea,Linea).
@@ -264,7 +245,6 @@ resolverFilas(RowN,PistasFilas,Resuelta,Grilla,NewGrilla):-
      RowN < Cant,
      getPos(RowN,PistasFilas,PistasN),
      getPos(RowN,Grilla,Fila),
-     not(lineaCompleta(Fila)),
      generarJugada(PistasN,Fila,Jugada),
      jugarFila(RowN,Jugada,Grilla,Aux),
      getPos(RowN,Grilla,NewFila),
@@ -274,10 +254,6 @@ resolverFilas(RowN,PistasFilas,Resuelta,Grilla,NewGrilla):-
       Resuelta is 1 * Resuelta1
           ;
       Resuelta is 0).
-
-resolverFilas(RowN,PistasFilas,Resuelta,Grilla,NewGrilla):-
-    RowN1 is RowN + 1,
-    resolverFilas(RowN1,PistasFilas,Resuelta,Grilla,NewGrilla).
      
 resolverColumnas(ColN,_,Resuelta,Grilla,NewGrilla):-
      cantidadColumnas(Grilla,ColN),
@@ -289,7 +265,6 @@ resolverColumnas(ColN,PistasColumnas,Resuelta,Grilla,NewGrilla):-
      ColN < Cant,
      getPos(ColN,PistasColumnas,PistasN),
      getCol(ColN,Grilla,Columna),
-     not(lineaCompleta(Columna)),
      generarJugada(PistasN,Columna,Jugada),
      jugarColumna(ColN,Jugada,Grilla,Aux),
      getCol(ColN,Grilla,NewCol),
@@ -299,7 +274,3 @@ resolverColumnas(ColN,PistasColumnas,Resuelta,Grilla,NewGrilla):-
       Resuelta is 1 * Resuelta1
           ;
       Resuelta is 0).
-
-resolverColumnas(ColN,PistasColumnas,Resuelta,Grilla,NewGrilla):-
-    ColN1 is ColN + 1,
-    resolverColumnas(ColN1,PistasColumnas,Resuelta,Grilla,NewGrilla).
