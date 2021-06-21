@@ -40,9 +40,6 @@ put(Contenido, [RowN, ColN], PistasFilas, PistasColumnas, Grilla, NewGrilla, Row
         isColumnCorrect(ColN,PistasColumnas,NewGrilla,ColSat).
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%getPos(?Pos,+List,?Element)
 
 getPos(0,[X|_],X).
 getPos(N,[_|XL],X):-
