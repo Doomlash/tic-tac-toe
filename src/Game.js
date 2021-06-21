@@ -22,6 +22,7 @@ class Game extends React.Component {
       win: false,
       statusText:'Keep playing!',
       solvedGridButton: 'Show Solved Grid',
+      solveCellButton:'Solve Cell',
       waiting: false
     };
     this.handleClick = this.handleClick.bind(this);
@@ -84,7 +85,7 @@ class Game extends React.Component {
       auxPut = this.state.solvedGrid[i][j]
     }
     const currentPut = auxPut;
-    if (!(this.state.solveNext && currentPut === this.state.grid[i][j])){
+    if (!(this.state.solveNext && this.state.grid[i][j] !== "_")){
       const queryS = 'put("'+ currentPut +'", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
       this.setState({
         waiting: true
@@ -98,7 +99,8 @@ class Game extends React.Component {
             grid: response['GrillaRes'],
             solvedRowCol: aux,
             waiting: false,
-            solveNext: false
+            solveNext: false,
+            solveCellButton:'Solve Cell'
           });
           let win = true;
           let rows = this.state.solvedRowCol[0];
@@ -179,9 +181,17 @@ class Game extends React.Component {
   }
 
   solveCell(){
-    this.setState({
-      solveNext:true
-    })
+    if(this.state.solveNext){
+      this.setState({
+        solveNext:false,
+        solveCellButton:'Solve Cell'
+      })
+    }
+    else{
+      this.setState({
+        solveNext:true,
+        solveCellButton:'Cancel'
+    });}
   }
 
   render() {
@@ -208,7 +218,7 @@ class Game extends React.Component {
         </div>
         <div>
           <button onClick={this.showSolution}>{this.state.solvedGridButton}</button>
-          <button onClick={this.solveCell} disabled={this.state.solveNext}>Solve Cell</button>
+          <button onClick={this.solveCell}>{this.state.solveCellButton}</button>
         </div>
       </div>
     );
