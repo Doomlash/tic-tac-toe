@@ -29,27 +29,45 @@ class Game extends React.Component {
     this.changePut = this.changePut.bind(this);
     this.showSolution = this.showSolution.bind(this);
     this.solveCell = this.solveCell.bind(this);
+    this.handlePengineSolve = this.handlePengineSolve.bind(this)
     this.pengine = new PengineClient(this.handlePengineCreate);
   }
 
   handlePengineCreate() {
-
     const queryS = 'init(PistasFilas, PistasColumns, Grilla)';
     this.pengine.query(queryS, (success, response) => {
       if (success) {
         const aux = [Array(response['Grilla'].length).fill(0),Array(response['Grilla'][0].length).fill(0)];
         this.setState({
           grid: response['Grilla'],
-          solvedGrid: response['Grilla'],
           solvedRowCol:aux,
+          waiting: true,
           rowClues: response['PistasFilas'],
           colClues: response['PistasColumns'],
         });
+        this.handlePengineSolve();
       }
     });
+   
   }
 
-  
+  handlePengineSolve(){
+      const rowClues = JSON.stringify(this.state.rowClues);
+      const colClues = JSON.stringify(this.state.colClues);
+      const queryS = 'resolverGrilla('+ rowClues +', '+ colClues +', GrillaRes)';
+      this.pengine.query(queryS, (success, response) => {
+        if (success) {
+          this.setState({
+            solvedGrid: response['GrillaRes'],
+            waiting: false,
+          });
+        } else{
+          this.setState({
+            waiting: false,
+          });
+        }
+      });
+  }
 
   handleClick(i, j) {
     // No action on click if we are waiting.
@@ -66,60 +84,67 @@ class Game extends React.Component {
       auxPut = this.state.solvedGrid[i][j]
     }
     const currentPut = auxPut;
-    const queryS = 'put("'+ currentPut +'", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
-    this.setState({
-      waiting: true
-    });
-    this.pengine.query(queryS, (success, response) => {
-      if (success) {
-        let aux = this.state.solvedRowCol;
-        aux[0][i] = response['FilaSat'];
-        aux[1][j] = response['ColSat'];
-        this.setState({
-          grid: response['GrillaRes'],
-          solvedRowCol: aux,
-          waiting: false,
-          solveNext: false
-        });
-        let win = true;
-        let rows = this.state.solvedRowCol[0];
-        let columns = this.state.solvedRowCol[1];
-        for (let x in rows) {
-          if(rows[x]===0){
-            win = false;
-            break;
-          }
-        };
-        if(win){
-          for (let x in columns){
-            if(columns[x]===0){
-              win=false;
+    if (!(this.state.solveNext && currentPut === this.state.grid[i][j])){
+      const queryS = 'put("'+ currentPut +'", [' + i + ',' + j + '], ' + rowClues + ', ' + colClues + ', ' + squaresS + ', GrillaRes, FilaSat, ColSat)';
+      this.setState({
+        waiting: true
+      });
+      this.pengine.query(queryS, (success, response) => {
+        if (success) {
+          let aux = this.state.solvedRowCol;
+          aux[0][i] = response['FilaSat'];
+          aux[1][j] = response['ColSat'];
+          this.setState({
+            grid: response['GrillaRes'],
+            solvedRowCol: aux,
+            waiting: false,
+            solveNext: false
+          });
+          let win = true;
+          let rows = this.state.solvedRowCol[0];
+          let columns = this.state.solvedRowCol[1];
+          for (let x in rows) {
+            if(rows[x]===0){
+              win = false;
               break;
             }
-          }
-        }
-        if(win){
-          let grilla = this.state.grid
-          for (let x in rows){
-            for (let y in columns){
-              if(grilla[x][y]=== '_'){
-                grilla[x][y]="X"
+          };
+          if(win){
+            for (let x in columns){
+              if(columns[x]===0){
+                win=false;
+                break;
               }
             }
           }
+          if(win){
+            let grilla = this.state.grid
+            for (let x in rows){
+              for (let y in columns){
+                if(grilla[x][y]=== '_'){
+                  grilla[x][y]="X"
+                }
+              }
+            }
+            this.setState({
+              win:true,
+              statusText:'You Win!!!',
+              grid:grilla
+            });
+          }
+          
+        } else {
           this.setState({
-            win:true,
-            statusText:'You Win!!!',
-            grid:grilla
+            waiting: false
           });
         }
-         
-      } else {
-        this.setState({
-          waiting: false
-        });
-      }
-    });
+      });}
+    else{
+      this.setState({
+        solveNext: false
+      });
+    }
+
   }
 
   changePut(){
@@ -136,27 +161,27 @@ class Game extends React.Component {
   }
 
   showSolution(){
-      if(this.state.solvedGridShow){
-        this.setState({
-          grid:this.state.currentGrid,
-          solvedGridShow: false,
-          solvedGridButton:'Show Solved Grid'
-        })
-      }
-      else{
-        let auxGrid = this.state.grid;
-        this.setState({
+    if(this.state.solvedGridShow){
+      this.setState({
+        grid:this.state.currentGrid,
+        solvedGridShow: false,
+        solvedGridButton:'Show Solved Grid'
+      })
+    }
+    else{
+      let auxGrid = this.state.grid;
+      this.setState({
         grid:this.state.solvedGrid,
         currentGrid:auxGrid,
         solvedGridShow: true,
         solvedGridButton:'Hide Solved Grid'
-      })}
+    });}
   }
 
   solveCell(){
-      this.setState({
-        solveNext:true
-      })
+    this.setState({
+      solveNext:true
+    })
   }
 
   render() {
